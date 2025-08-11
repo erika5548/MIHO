@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIHO's Princess Diary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes sparkle-animation {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background: linear-gradient(135deg, #fce3ec, #e8dff5, #fde4e4, #e8dff5);
+            background-size: 400% 400%;
+            color: #4a235a;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            animation: shimmer 15s ease infinite;
+            overflow-x: hidden; /* 横スクロールのみを禁止 */
+        }
+        .container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(255, 255, 255, 1);
+            backdrop-filter: blur(12px);
+        }
+        h1 {
+            font-family: 'Pacifico', cursive;
+            color: #c2185b;
+            text-shadow: 1px 1px 3px rgba(255,255,255,0.5);
+            font-size: 3.5rem;
+            position: relative;
+        }
+        h1::after {
+            content: '✨';
+            position: absolute;
+            top: -10px;
+            right: 20%;
+            font-size: 1.5rem;
+            animation: sparkle-animation 1.5s infinite alternate;
+        }
+        .task-item {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-left: 5px solid #f8bbd0;
+            transition: all 0.3s ease;
+            padding: 1.25rem;
+            border-radius: 12px;
+        }
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(236, 64, 122, 0.2);
+        }
+        .task-item.completed {
+            background-color: rgba(243, 229, 245, 0.8);
+            border-left-color: #a5d6a7;
+        }
+        .task-item.completed .task-name-editable {
+            text-decoration: line-through;
+            color: #9e9e9e;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.8);
+            accent-color: #f06292;
+            border-radius: 50%;
+        }
+        .report-button {
+            background: linear-gradient(45deg, #f48fb1, #ec407a);
+            color: white;
+            transition: all 0.3s ease;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            font-weight: 500;
+            border: none;
+            box-shadow: 0 4px 15px rgba(236, 64, 122, 0.4);
+        }
+        .report-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(236, 64, 122, 0.5);
+        }
+        .task-name-editable {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .task-icon {
+            margin-right: 1rem;
+            color: #ec407a;
+        }
+        .additional-input, .additional-select {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid #fce4ec;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #4a235a;
+            font-size: 1.1rem;
+            margin-top: 0.75rem;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+        .note-input {
+            width: 100%;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid #fce4ec;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #4a235a;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            resize: none;
+        }
+        .note-label {
+            font-size: 0.9rem;
+            color: #7b1fa2;
+            margin-top: 0.5rem;
+        }
+        .custom-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 15px;
+            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 0 20px rgba(236, 64, 122, 0.5);
+            color: #4a235a;
+        }
+        .sparkle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .sparkle i {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #fff, #f8bbd0, #e1f5fe);
+            border-radius: 50%;
+            animation: sparkle-animation 1s forwards;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="sparkle"></div>
+    <div id="app" class="container">
+        <h1 class="text-center mb-6">MIHO's Princess Diary</h1>
+        <p id="current-date" class="text-center text-xl font-bold text-gray-600 mb-8"></p>
+
+        <ul id="checklist" class="space-y-4">
+            <!-- Daily missions will be inserted here -->
+        </ul>
+
+        <!-- Feelings section -->
+        <div class="mt-8">
+            <h3 class="text-xl font-bold mb-2" style="color: #c2185b;">きょうの きぶんは？</h3>
+            <select id="todays-feelings" class="additional-select w-full">
+                <option value="さいこうの きぶん！">さいこうの きぶん！</option>
+                <option value="ちょっと つかれた">ちょっと つかれた</option>
+                <option value="あしたも がんばる！">あしたも がんばる！</option>
+                <option value="ちょっぴり ないしょ">ちょっぴり ないしょ</option>
+                <option value="そのほか">そのほか</option>
+            </select>
+            <textarea id="other-feelings-note" class="note-input w-full hidden mt-2" rows="2" placeholder="じゆうに かいてね"></textarea>
+        </div>
+
+        <p id="completion-message" class="mission-log hidden">Mission Complete! You are a true princess!</p>
+        <div id="status-message" class="text-center text-sm mt-4 hidden"></div>
+
+        <!-- Report button moved to the very bottom -->
+        <div class="mt-8 flex flex-col items-center">
+            <button id="submit-button" class="report-button rounded-full shadow-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                Report to Mom
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-modal" class="custom-modal">
+        <div class="modal-content">
+            <p id="modal-message" class="text-lg mb-4"></p>
+            <button id="modal-ok-button" class="report-button rounded-full">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checklist = document.getElementById('checklist');
+            const submitButton = document.getElementById('submit-button');
+            const completionMessage = document.getElementById('completion-message');
+            const body = document.body;
+            const currentDateElement = document.getElementById('current-date');
+            const statusMessage = document.getElementById('status-message');
+            const todaysFeelingsSelect = document.getElementById('todays-feelings');
+            const otherFeelingsNote = document.getElementById('other-feelings-note');
+            const customModal = document.getElementById('custom-modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalOkButton = document.getElementById('modal-ok-button');
+
+            // ★★★★★ 新しいGASのURLに書き換えてください ★★★★★
+            const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwiUXT0H_XhqTGBaVDHjmKuMjBUWTZeRXC4FV9YD8u_boNEPxN3JiThs5QXZHAJF_z7cg/exec";
+            
+            const originalBackground = 'linear-gradient(135deg, #fce3ec, #e8dff5, #fde4e4, #e8dff5)';
+            const completedBackground = 'linear-gradient(135deg, #e1f5fe, #d1c4e9, #e0f7fa, #d1c4e9)';
+
+            // Initial Data
+            const dailyInitialTasks = [
+                { name: 'はみがき check', completed: false, note: '', type: 'checkbox' },
+                { name: 'きょうの うんどう', completed: false, sec: '', note: '', type: 'seconds' },
+                { name: 'おんどく', completed: false, note: '', type: 'checkbox' },
+                { name: 'ソロタッチ', completed: false, note: '', type: 'checkbox' },
+                { name: 'thinkthink', completed: false, note: '', type: 'checkbox' },
+                { name: 'T.Nobu', completed: false, note: '', type: 'checkbox' },
+                { name: 'TODO math', completed: false, note: '', type: 'checkbox' },
+                { name: 'おじゅけんべんきょう', completed: false, note: '', type: 'checkbox' },
+            ];
+
+            // App State
+            let dailyTasks;
+            let todaysFeelings;
+            let otherFeelings;
+
+            // --- Helper Functions ---
+            function getIconSvg(taskName) {
+                const name = taskName.toLowerCase();
+                if (name.includes('はみがき')) return '✨';
+                if (name.includes('うんどう')) return '🎀';
+                if (name.includes('おんどく')) return '🌸';
+                if (name.includes('ソロタッチ') || name.includes('thinkthink') || name.includes('todo math')) return '⭐';
+                if (name.includes('nobu') || name.includes('おじゅけんべんきょう')) return '👑';
+                return '💖';
+            }
+            
+            // --- Data Storage Functions ---
+            function saveData() {
+                const dataToSave = { dailyTasks, todaysFeelings, otherFeelings };
+                localStorage.setItem('mihoMissionLogData', JSON.stringify(dataToSave));
+            }
+
+            function loadData() {
+                const savedData = JSON.parse(localStorage.getItem('mihoMissionLogData'));
+                const lastSaveDate = localStorage.getItem('lastSaveDate_miho');
+                const todayStr = new Date().toLocaleDateString();
+
+                if (savedData && lastSaveDate === todayStr) {
+                    dailyTasks = savedData.dailyTasks || dailyInitialTasks;
+                    todaysFeelings = savedData.todaysFeelings || 'さいこうの きぶん！';
+                    otherFeelings = savedData.otherFeelings || '';
+                } else {
+                    dailyTasks = dailyInitialTasks;
+                    todaysFeelings = 'さいこうの きぶん！';
+                    otherFeelings = '';
+                }
+                localStorage.setItem('lastSaveDate_miho', todayStr);
+            }
+
+            // --- UI Functions ---
+            function showModal(message) {
+                modalMessage.textContent = message;
+                customModal.style.display = 'flex';
+            }
+
+            modalOkButton.addEventListener('click', () => {
+                customModal.style.display = 'none';
+            });
+
+            function checkCompletion() {
+                if (!dailyTasks) return;
+                const allCompleted = dailyTasks.every(task => task.completed);
+                if (allCompleted && dailyTasks.length > 0) {
+                    completionMessage.classList.remove('hidden');
+                    body.style.background = completedBackground;
+                } else {
+                    completionMessage.classList.add('hidden');
+                    body.style.background = originalBackground;
+                }
+            }
+            
+            // --- Render Functions ---
+            function renderTasks(tasksToRender, containerElement) {
+                containerElement.innerHTML = '';
+                if (!tasksToRender || tasksToRender.length === 0) {
+                    containerElement.innerHTML = '<li class="text-center text-gray-500">きょうの missionは ありません</li>';
+                    return;
+                }
+                
+                tasksToRender.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.className = `task-item flex flex-col ${task.completed ? 'completed' : ''}`;
+                    
+                    let additionalInputHtml = '';
+                    if (task.type === 'seconds') {
+                        additionalInputHtml = `<input type="number" class="additional-input w-24 text-center ml-4" placeholder="びょう" value="${task.sec || ''}" data-index="${index}" data-key="sec">`;
+                    }
+
+                    li.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="task-icon text-2xl">${getIconSvg(task.name)}</span>
+                            <input type="checkbox" id="task-${index}" class="form-checkbox h-6 w-6 mr-4" data-index="${index}" ${task.completed ? 'checked' : ''}>
+                            <label for="task-${index}" class="task-name-editable flex-grow">${task.name}</label>
+                            ${additionalInputHtml}
+                        </div>
+                        <div class="pl-12 mt-2">
+                            <textarea class="note-input w-full" rows="1" placeholder="めも" data-index="${index}" data-key="note">${task.note || ''}</textarea>
+                        </div>
+                    `;
+                    containerElement.appendChild(li);
+                });
+                attachEventListeners(containerElement);
+            }
+
+            function attachEventListeners(containerElement) {
+                containerElement.querySelectorAll('.additional-input, .note-input').forEach(el => {
+                    el.addEventListener('change', (event) => {
+                        const target = event.target;
+                        const index = parseInt(target.dataset.index, 10);
+                        const key = target.dataset.key;
+                        dailyTasks[index][key] = target.value;
+                        saveData();
+                    });
+                });
+
+                containerElement.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                    el.addEventListener('change', (event) => {
+                        const target = event.target;
+                        const li = target.closest('.task-item');
+                        const index = parseInt(target.dataset.index, 10);
+                        
+                        if(dailyTasks[index]) {
+                            dailyTasks[index].completed = target.checked;
+                            li.classList.toggle('completed', target.checked);
+                            saveData();
+                            checkCompletion();
+                        }
+                    });
+                });
+            }
+            
+            // --- Global Event Listeners ---
+            function resetDailyMissions() {
+                dailyTasks.forEach(task => {
+                    task.completed = false;
+                    task.note = '';
+                    if (task.type === 'seconds') task.sec = '';
+                });
+                saveData();
+                renderTasks(dailyTasks, checklist);
+                checkCompletion();
+            }
+
+            submitButton.addEventListener('click', async () => {
+                statusMessage.classList.remove('hidden');
+                statusMessage.className = 'text-center text-sm mt-4 text-gray-500';
+                statusMessage.textContent = 'ほうこくしています...';
+
+                let messageText = `MIHO: *[${currentDateElement.textContent}] きょうの mission ほうこく！*`;
+                messageText += `\n\n*◆きょうの mission◆*`;
+                dailyTasks.forEach(task => {
+                    const status = task.completed ? '👑' : '💍';
+                    let details = '';
+                    if (task.type === 'seconds' && task.sec) {
+                        details += ` (${task.sec}びょう)`;
+                    }
+                    messageText += `\n${status} ${task.name}${details}`;
+                    if (task.note) messageText += `\n    > めも: ${task.note}`;
+                });
+                
+                const finalFeelings = todaysFeelings === 'そのほか' ? otherFeelings : todaysFeelings;
+                messageText += `\n\n*◆きょうの きぶん◆*\n${finalFeelings}`;
+
+                try {
+                    await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                        body: JSON.stringify({ text: messageText })
+                    });
+                    statusMessage.style.color = '#ec407a';
+                    statusMessage.textContent = 'ほうこく しました！';
+                    
+                    setTimeout(() => {
+                        resetDailyMissions();
+                        statusMessage.textContent = 'ほうこくが おわり、missionが resetされました。';
+                    }, 1500);
+
+                } catch (error) {
+                    statusMessage.style.color = '#f44336';
+                    statusMessage.textContent = 'そうしんに しっぱい しました。';
+                    console.error('送信エラー:', error);
+                }
+            });
+
+            todaysFeelingsSelect.addEventListener('change', (e) => {
+                todaysFeelings = e.target.value;
+                if (todaysFeelings === 'そのほか') {
+                    otherFeelingsNote.classList.remove('hidden');
+                } else {
+                    otherFeelingsNote.classList.add('hidden');
+                    otherFeelings = '';
+                }
+                saveData();
+            });
+
+            otherFeelingsNote.addEventListener('change', (e) => {
+                otherFeelings = e.target.value;
+                saveData();
+            });
+            
+            // --- Sparkle Effect ---
+            const sparkleContainer = document.querySelector('.sparkle');
+            function createSparkle(e) {
+                // Handle both mouse and touch events safely
+                const x = e.clientX ?? e.touches?.[0]?.clientX;
+                const y = e.clientY ?? e.touches?.[0]?.clientY;
+
+                // If coordinates are not available, do nothing
+                if (x === undefined || y === undefined) {
+                    return;
+                }
+
+                const sparkle = document.createElement('i');
+                sparkle.style.left = x + 'px';
+                sparkle.style.top = y + 'px';
+                sparkle.style.transformOrigin = 'center';
+                
+                const size = Math.random() * 8 + 2;
+                sparkle.style.width = size + 'px';
+                sparkle.style.height = size + 'px';
+
+                sparkleContainer.appendChild(sparkle);
+
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 1000);
+            }
+            window.addEventListener('mousemove', createSparkle);
+            window.addEventListener('touchmove', createSparkle);
+
+            // --- App Initialization ---
+            const today = new Date();
+            currentDateElement.textContent = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            loadData();
+            todaysFeelingsSelect.value = todaysFeelings;
+            otherFeelingsNote.value = otherFeelings;
+            if (todaysFeelings === 'そのほか') {
+                otherFeelingsNote.classList.remove('hidden');
+            }
+            renderTasks(dailyTasks, checklist);
+            checkCompletion();
+        });
+    </script>
+</body>
+</html>
